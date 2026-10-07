@@ -1,0 +1,20 @@
+services:
+  cue-rail:
+    build: .
+    image: cue-rail:1.0.0
+    container_name: cue-rail
+    restart: unless-stopped
+    ports:
+      # 宿主机端口:容器端口 —— 修改左侧端口即可改访问端口
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      DB_PATH: /data/cuerail.db
+      # 首次启动且数据库为空时，自动创建示例场次与一个已发布版本；改为 false 则初始化空库
+      SEED_ON_EMPTY: "${SEED_ON_EMPTY:-true}"
+      TZ: "${TZ:-Asia/Shanghai}"
+    volumes:
+      - cue-data:/data
+
+volumes:
+  cue-data:

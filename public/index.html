@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>舞台提示台 · Cue Rail</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🎭 舞台提示台 <span class="sub">Cue Rail · 联排 / 正式演出</span></div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="editor">① 场记编排（草稿）</button>
+      <button class="tab" data-tab="versions">② 发布版本</button>
+      <button class="tab" data-tab="console">③ 演出控制台</button>
+      <button class="tab" data-tab="logs">④ 操作记录</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= editor ================= -->
+    <section id="tab-editor" class="panel active">
+      <div class="toolbar">
+        <label>选择场次：
+          <select id="ed-show-select"></select>
+        </label>
+        <button id="ed-new-show" class="btn">新建场次</button>
+        <span class="spacer"></span>
+        <span id="ed-meta" class="meta"></span>
+      </div>
+      <div class="hint">
+        顺序即列表顺序（可上下移动）；「等待」为相对上一条的秒数，必须为非负整数。
+        保存或调整顺序后自动重新计算每条的<b>预计时间（累计）</b>与总时长。
+      </div>
+      <table class="cue-table">
+        <thead>
+          <tr><th style="width:110px">操作</th><th style="width:60px">顺序</th><th style="width:90px">类型</th>
+          <th>提示标题</th><th style="width:120px">相对等待(秒)</th><th>操作说明</th><th style="width:110px">预计时间</th></tr>
+        </thead>
+        <tbody id="ed-rows"></tbody>
+      </table>
+      <div class="toolbar">
+        <button id="ed-add" class="btn">＋ 新增提示</button>
+        <button id="ed-save" class="btn primary">保存草稿并重算时间</button>
+        <button id="ed-publish" class="btn success">发布为不可变版本</button>
+        <span class="spacer"></span>
+        <span id="ed-total" class="total"></span>
+      </div>
+    </section>
+
+    <!-- ================= versions ================= -->
+    <section id="tab-versions" class="panel">
+      <div class="toolbar">
+        <label>选择场次：
+          <select id="v-show-select"></select>
+        </label>
+        <button id="v-refresh" class="btn">刷新</button>
+      </div>
+      <div id="v-list" class="cards"></div>
+      <div id="v-detail" class="version-detail"></div>
+    </section>
+
+    <!-- ================= console ================= -->
+    <section id="tab-console" class="panel">
+      <div class="toolbar">
+        <label>进行/历史演出：
+          <select id="c-perf-select"></select>
+        </label>
+        <button id="c-refresh" class="btn">刷新列表</button>
+        <span class="spacer"></span>
+        <button id="c-new" class="btn success">从指定版本启动新演出 ▾</button>
+      </div>
+
+      <div id="c-launch" class="launch-box hidden">
+        <label>选择版本：<select id="c-version-select"></select></label>
+        <label>操作员：<input id="c-operator" type="text" placeholder="操作员姓名" /></label>
+        <button id="c-start" class="btn success">启动演出</button>
+      </div>
+
+      <div id="c-stage" class="hidden">
+        <div class="stage-head">
+          <div>
+            <div id="c-title" class="stage-title"></div>
+            <div id="c-sub" class="meta"></div>
+          </div>
+          <div class="progress-box">
+            <div class="progress-label">所见进度号</div>
+            <div id="c-progress" class="progress-no">0</div>
+            <div id="c-status" class="status-badge">—</div>
+          </div>
+        </div>
+
+        <div class="reqbar">
+          <label>操作请求号：<input id="c-request-no" type="text" /></label>
+          <button id="c-gen-no" class="btn small" title="生成唯一请求号">生成</button>
+          <span class="hint inline">每次操作使用新号；同号同内容重试返回原结果，同号异内容将被拒绝。</span>
+        </div>
+
+        <table class="cue-table live">
+          <thead><tr><th style="width:60px">序号</th><th style="width:80px">类型</th><th>提示 / 说明</th>
+          <th style="width:90px">等待</th><th style="width:110px">预计时间</th><th style="width:100px">状态</th></tr></thead>
+          <tbody id="c-rows"></tbody>
+        </table>
+
+        <div class="toolbar actionbar">
+          <button id="c-exec" class="btn primary big">✔ 确认执行当前提示</button>
+          <button id="c-skip" class="btn warn big">⏭ 跳过当前提示</button>
+          <button id="c-undo" class="btn big">↩ 撤销最后一次跳过</button>
+          <span class="spacer"></span>
+          <button id="c-end" class="btn danger">结束本场演出</button>
+        </div>
+      </div>
+      <div id="c-empty" class="empty-note">请选择一场演出，或从指定版本启动新演出。</div>
+    </section>
+
+    <!-- ================= logs ================= -->
+    <section id="tab-logs" class="panel">
+      <div class="toolbar">
+        <label>筛选演出：<select id="l-perf-select"><option value="">全部演出</option></select></label>
+        <button id="l-refresh" class="btn">刷新</button>
+        <label><input type="checkbox" id="l-hide-idempotent" /> 隐藏幂等重试</label>
+      </div>
+      <table class="log-table">
+        <thead><tr><th style="width:150px">时间(UTC)</th><th style="width:110px">演出/场次</th><th style="width:90px">操作员</th>
+        <th style="width:120px">请求号</th><th style="width:80px">动作</th><th style="width:60px">提示#</th>
+        <th style="width:70px">所见进度</th><th style="width:90px">结果</th><th>原因 / 说明</th></tr></thead>
+        <tbody id="l-rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

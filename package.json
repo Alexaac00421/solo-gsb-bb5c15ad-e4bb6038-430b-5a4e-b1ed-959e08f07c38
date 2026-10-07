@@ -1,0 +1,15 @@
+{
+  "name": "cue-rail",
+  "version": "1.0.0",
+  "description": "Stage cue rail for rehearsals and live performances (Node.js + SQLite + browser UI)",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "init-db": "node src/db.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2"
+  }
+}
